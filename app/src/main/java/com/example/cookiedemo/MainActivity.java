@@ -19,9 +19,12 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
 import org.json.Cookie;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.net.CookieStore;
 
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -29,9 +32,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     WebView mWebView;
     Button btn_copy;
     TextView tvCookie;
-    JSONObject jsonObject;
-    private String url = "https://main.m.taobao.com/olist/index.html?spm=a2141.7756461.toolbar.i2";
+//    JSONObject jsonObject;
+//    private String url = "https://main.m.taobao.com/olist/index.html?spm=a2141.7756461.toolbar.i2";
 
+    private String url="https://main.m.taobao.com/";
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,10 +88,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 String cookieStr = cookieManager.getCookie(url);
                 if (cookieStr != null) {
                     try {
-                         jsonObject=Cookie.toJSONObject(cookieStr);
-                        tvCookie.setText(jsonObject.toString());
+//                         jsonObject= Cookie.toJSONObject(cookieStr);
+                        tvCookie.setText(cookieStr);
 
-                    } catch (JSONException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
 
@@ -114,13 +118,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View v) {
-        if (jsonObject!=null){
             ClipboardManager cm= (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
             if (cm!=null){
-                ClipData clipData=ClipData.newPlainText("Label",jsonObject.toString());
+                ClipData clipData=ClipData.newPlainText("Label",tvCookie.getText().toString());
                 cm.setPrimaryClip(clipData);
-                Toast.makeText(getApplicationContext(),"复制成功",Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this,"复制成功",Toast.LENGTH_SHORT).show();
             }
-        }
     }
 }
