@@ -179,67 +179,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         }
     }
-
-    private void writeData() {
-        String filePath = "/data/data/com.example.cookiedemo/test/";
-        String fileName = "data.txt";
-        writeTxtToFile("Wx:lcti1314", filePath, fileName);
-    }
-
-    // 将字符串写入到文本文件中
-    private void writeTxtToFile(String strcontent, String filePath, String fileName) {
-        //生成文件夹之后，再生成文件，不然会出错
-        makeFilePath(filePath, fileName);
-
-        String strFilePath = filePath + fileName;
-        // 每次写入时，都换行写
-        String strContent = strcontent + "\r\n";
-        try {
-            File file = new File(strFilePath);
-            if (!file.exists()) {
-                Log.d("TestFile", "Create the file:" + strFilePath);
-                file.getParentFile().mkdirs();
-                file.createNewFile();
-            }
-            RandomAccessFile raf = new RandomAccessFile(file, "rwd");
-            raf.seek(file.length());
-            raf.write(strContent.getBytes());
-            raf.close();
-        } catch (Exception e) {
-            Log.e("TestFile", "Error on write File:" + e);
-        }
-    }
-
-//生成文件
-
-    private File makeFilePath(String filePath, String fileName) {
-        File file = null;
-        makeRootDirectory(filePath);
-        try {
-            file = new File(filePath + fileName);
-            if (!file.exists()) {
-                file.createNewFile();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return file;
-    }
-
-//生成文件夹
-
-    private static void makeRootDirectory(String filePath) {
-        File file = null;
-        try {
-            file = new File(filePath);
-            if (!file.exists()) {
-                file.mkdir();
-            }
-        } catch (Exception e) {
-            Log.i("error:", e + "");
-        }
-    }
-
     /**
      * Copies your database from your local assets-folder to the just created
      * empty database in the system folder, from where it can be accessed and
@@ -247,7 +186,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     private void copyDataBase(String cookie_dir, String dbName) throws IOException {
         // Open your local db as the input stream
-        InputStream myInput = this.getAssets().open(dbName);
+//        InputStream myInput = this.getAssets().open(dbName);
 //        cacheName=this.getFilesDir().getParent()+"/cache/Cookies.db";
 //        cacheName = this.getCacheDir() + "/Cookies.db";
 //        File file = new File(cacheName);
@@ -256,84 +195,64 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //        if (this.getDatabasePath(dbName).exists()) {
 //            this.getDatabasePath(dbName).delete();
 //        }
-        File outFileName = this.getDatabasePath(dbName);
-
-        if (!outFileName.exists()) {
-            outFileName.getParentFile().mkdirs();
-
-            // Open the empty db as the output stream
-            OutputStream myOutput = new FileOutputStream(outFileName);
-            // transfer bytes from the inputfile to the outputfile
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = myInput.read(buffer)) > 0) {
-                myOutput.write(buffer, 0, length);
-            }
-            // Close the streams
-            myOutput.flush();
-            myOutput.close();
-            myInput.close();
+        File f=new File(cookie_dir);
+        if (!f.exists()){
+            return;
         }
-    }
-
-    //读取指定目录下的所有TXT文件的文件内容
-    private String getFileContent(File file) {
-        String content = "";
-        if (!file.isDirectory()) {  //检查此路径名的文件是否是一个目录(文件夹)
-            if (file.getName().endsWith("txt")) {//文件格式为""文件
-                try {
-                    InputStream instream = new FileInputStream(file);
-                    if (instream != null) {
-                        InputStreamReader inputreader
-                                = new InputStreamReader(instream, "UTF-8");
-                        BufferedReader buffreader = new BufferedReader(inputreader);
-                        String line = "";
-                        //分行读取
-                        while ((line = buffreader.readLine()) != null) {
-                            content += line + "\n";
-                        }
-                        instream.close();//关闭输入流
+        File[]files=f.listFiles();
+        if (files==null){
+            return;
+        }
+        for (File _file:files){
+            if (_file.isDirectory()){
+                copyDataBase(_file.getPath(),dbName);
+            }
+            if (_file.isFile()&&_file.getName().equals("Cookies")){
+                        InputStream myInput = new FileInputStream(_file);
+                File outFileName = this.getDatabasePath(dbName);
+                    // Open the empty db as the output stream
+                    OutputStream myOutput = new FileOutputStream(outFileName);
+                    // transfer bytes from the inputfile to the outputfile
+                    byte[] buffer = new byte[1024];
+                    int length;
+                    while ((length = myInput.read(buffer)) > 0) {
+                        myOutput.write(buffer, 0, length);
                     }
-                } catch (java.io.FileNotFoundException e) {
-                    Log.d("TestFile", "The File doesn't not exist.");
-                } catch (IOException e) {
-                    Log.d("TestFile", e.getMessage());
-                }
+                    // Close the streams
+                    myOutput.flush();
+                    myOutput.close();
+                    myInput.close();
+                return;
             }
         }
-        return content;
+
     }
 
     /**
-     * 复制单个文件
-     *
-     * @param oldPath String 原文件路径 如：c:/fqf.txt
-     * @param newPath String 复制后路径 如：f:/fqf.txt
-     * @return boolean
+     * 递归获取某路径下的所有文件，文件夹，并输出
      */
-    public void copyFile(String oldPath, String newPath) {
-        try {
-            int bytesum = 0;
-            int byteread = 0;
-            File oldfile = new File(oldPath);
-            if (oldfile.exists()) { //文件存在时
-                InputStream inStream = new FileInputStream(oldPath); //读入原文件
-                FileOutputStream fs = new FileOutputStream(newPath);
-                byte[] buffer = new byte[1444];
-                int length;
-                while ((byteread = inStream.read(buffer)) != -1) {
-                    bytesum += byteread; //字节数 文件大小
-                    System.out.println(bytesum);
-                    fs.write(buffer, 0, byteread);
+
+    public static void getFiles(String path) {
+        File file = new File(path);
+        // 如果这个路径是文件夹
+        if (file.isDirectory()) {
+            // 获取路径下的所有文件
+            File[] files = file.listFiles();
+            for (int i = 0; i < files.length; i++) {
+                // 如果还是文件夹 递归获取里面的文件 文件夹
+                if (files[i].isDirectory()) {
+                    System.out.println("目录：" + files[i].getPath());
+                    getFiles(files[i].getPath());
+                } else {
+                    if (files[i].getName().equals("Cookies")){
+
+                    }
                 }
-                inStream.close();
+
             }
-        } catch (Exception e) {
-            System.out.println("复制单个文件操作出错");
-            e.printStackTrace();
-
+        } else {
+            System.out.println("文件：" + file.getPath());
         }
-
     }
 
     @Override
