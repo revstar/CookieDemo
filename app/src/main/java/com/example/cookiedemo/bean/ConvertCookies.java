@@ -1,5 +1,10 @@
 package com.example.cookiedemo.bean;
 
+import android.util.Log;
+
+import java.math.BigInteger;
+import java.util.Date;
+
 /**
  * Create on 2020/3/9 16:38
  * author revstar
@@ -19,8 +24,11 @@ public class ConvertCookies {
         this.value = value;
         this.path = path;
         this.expires = expires;
+        this.secure=secure;
         if (expires==0){
             this.expires=null;
+        }else {
+            this.expires=  expires/1000000-11644473600L;
         }
     }
 
@@ -45,6 +53,7 @@ public class ConvertCookies {
     }
 
     public Long getExpires() {
+
         return expires;
     }
 

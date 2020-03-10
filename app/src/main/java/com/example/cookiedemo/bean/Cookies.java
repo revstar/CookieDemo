@@ -3,6 +3,8 @@ package com.example.cookiedemo.bean;
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Generated;
 
+import java.math.BigInteger;
+
 /**
  * Create on 2020/3/9 15:44
  * author revstar
@@ -28,7 +30,6 @@ public class Cookies {
     public Cookies() {
     }
 
-
     @Generated(hash = 1698672437)
     public Cookies(String host_key, String name, String value, String path,
             boolean is_secure, long expires_utc) {
@@ -40,6 +41,13 @@ public class Cookies {
         this.expires_utc = expires_utc;
     }
 
+    public long getExpires_utc() {
+        return expires_utc;
+    }
+
+    public void setExpires_utc(long expires_utc) {
+        this.expires_utc = expires_utc;
+    }
 
     public String getHost_key() {
         return host_key;
@@ -80,13 +88,6 @@ public class Cookies {
         this.is_secure = is_secure;
     }
 
-    public long getExpires_utc() {
-        return expires_utc;
-    }
-
-    public void setExpires_utc(long expires_utc) {
-        this.expires_utc = expires_utc;
-    }
 
     public boolean getIs_secure() {
         return this.is_secure;
