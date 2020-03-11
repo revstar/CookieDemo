@@ -153,7 +153,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             if (_file.isFile() && _file.getName().equals(dbName)) {
                 boolean canRead=_file.canRead();
+                int size= (int) _file.length();
+                Log.d("文件大小:",size+"");
                 dataBaseFile = _file;
+                getCookies(dataBaseFile);
                 return;
 //                InputStream myInput=new FileInputStream(_file);
 //                File outFileName=this.getDatabasePath(dbName);
@@ -178,55 +181,58 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
 
-        getCookies();
+      new Thread(new Runnable() {
+          @Override
+          public void run() {
+              try {
+                  getDataBaseFile(cookie_dir,"Cookies");
+              } catch (IOException e) {
+                  e.printStackTrace();
+              }
+          }
+      }).start();
     }
 
 
-    private void getCookies() {
+    private void getCookies(File file) {
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
+        try {
 //                    writeData();
 //                    String content=getFileContent(new File("/data/data/com.example.cookiedemo/app_webview/data.txt"));
-                    getDataBaseFile(cookie_dir, "Cookies");
 //                    DaoMaster.DevOpenHelper openHelper = new DaoMaster.DevOpenHelper(getApplicationContext(), "Cookies");
 //                  copyFile("/data/data/com.example.cookiedemo/app_webview/Cookies.db","/data/data/com.example.cookiedemo/databases/Cookies.db");
 //                   getAllFiles("/data/data/com.example.cookiedemo/app_webview/","db");
-                    DaoMaster.DevOpenHelper openHelper=new DaoMaster.DevOpenHelper(new DatabaseContext(getApplication(),dataBaseFile),"Cookies",null);
-                    Database db = openHelper.getReadableDb();
-                    DaoMaster daoMaster = new DaoMaster(db);
-                    DaoSession daoSession = daoMaster.newSession();
-                    CookiesDao cookiesDao=daoSession.getCookiesDao();
+            DaoMaster.DevOpenHelper openHelper=new DaoMaster.DevOpenHelper(new DatabaseContext(getApplication(),file),"Cookies",null);
+            Database db = openHelper.getReadableDb();
+            DaoMaster daoMaster = new DaoMaster(db);
+            DaoSession daoSession = daoMaster.newSession();
+            CookiesDao cookiesDao=daoSession.getCookiesDao();
 
-                    List<Cookies> cookiesList = cookiesDao.loadAll();
-                    if (cookiesList != null) {
-                        if (mConvertCookiesList == null) {
-                            mConvertCookiesList = new ArrayList<>();
-                        }
-                        mConvertCookiesList.clear();
-                        for (Cookies cookies : cookiesList) {
-                            if (cookies != null) {
-                                ConvertCookies convertCookies = new ConvertCookies(cookies.host_key, cookies.name, cookies.value, cookies.path, cookies.is_secure, cookies.expires_utc);
-                                mConvertCookiesList.add(convertCookies);
-                            }
-                        }
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Gson gson = new GsonBuilder().serializeNulls().create();
-                                showCookie = gson.toJson(mConvertCookiesList);
-                                new ShowCookiePopup(getApplicationContext(), showCookie).showPopupWindow();
-                            }
-                        });
-
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+            List<Cookies> cookiesList = cookiesDao.loadAll();
+            if (cookiesList != null) {
+                if (mConvertCookiesList == null) {
+                    mConvertCookiesList = new ArrayList<>();
                 }
+                mConvertCookiesList.clear();
+                for (Cookies cookies : cookiesList) {
+                    if (cookies != null) {
+                        ConvertCookies convertCookies = new ConvertCookies(cookies.host_key, cookies.name, cookies.value, cookies.path, cookies.is_secure, cookies.expires_utc);
+                        mConvertCookiesList.add(convertCookies);
+                    }
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Gson gson = new GsonBuilder().serializeNulls().create();
+                        showCookie = gson.toJson(mConvertCookiesList);
+                        new ShowCookiePopup(getApplicationContext(), showCookie).showPopupWindow();
+                    }
+                });
+
             }
-        }).start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }
