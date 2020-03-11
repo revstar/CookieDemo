@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     WebView mWebView;
     Button btn_output;
-    private String url = "https://main.m.taobao.com/";
+    private String url = "https://main.m.taobao.com/olist/index.html";
     private String cookie_dir;
     private ArrayList<ConvertCookies> mConvertCookiesList;
     private String showCookie;
@@ -79,6 +79,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void initView(){
         mWebView = findViewById(R.id.web_view);
         btn_output = findViewById(R.id.btn_output);
+        btn_output.setText("加载。。。");
         btn_output.setOnClickListener(this);
         WebSettings settings = mWebView.getSettings();
 
@@ -111,8 +112,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                Log.d("url", url);
                 super.onPageFinished(view, url);
+                Log.d("PageFinish", url);
+                btn_output.setText("导出Cookies");
 
 
             }
@@ -156,22 +158,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 int size= (int) _file.length();
                 Log.d("文件大小:",size+"");
                 dataBaseFile = _file;
-                getCookies(dataBaseFile);
-                return;
-//                InputStream myInput=new FileInputStream(_file);
-//                File outFileName=this.getDatabasePath(dbName);
-//                // Open the empty db as the output stream
-//                OutputStream myOutput=new FileOutputStream(outFileName);
-//                // transfer bytes from the inputfile to the outputfile
-//                byte[]buffer=new byte[1024];
-//                int length;
-//                while ((length=myInput.read(buffer))>0){
-//                    myOutput.write(buffer,0,length);
-//                }
-//                // Close the streams
-//                myOutput.flush();
-//                myOutput.close();
-//                myInput.close();
+                InputStream myInput=new FileInputStream(_file);
+                File outFileName=this.getDatabasePath(dbName);
+                // Open the empty db as the output stream
+                OutputStream myOutput=new FileOutputStream(outFileName);
+                // transfer bytes from the inputfile to the outputfile
+                byte[]buffer=new byte[1024];
+                int length;
+                while ((length=myInput.read(buffer))>0){
+                    myOutput.write(buffer,0,length);
+                }
+                // Close the streams
+                myOutput.flush();
+                myOutput.close();
+                myInput.close();
             }
         }
 
@@ -186,15 +186,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
           public void run() {
               try {
                   getDataBaseFile(cookie_dir,"Cookies");
+                  getCookies();
               } catch (IOException e) {
                   e.printStackTrace();
               }
+
           }
       }).start();
     }
 
 
-    private void getCookies(File file) {
+    private void getCookies() {
 
         try {
 //                    writeData();
@@ -202,17 +204,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //                    DaoMaster.DevOpenHelper openHelper = new DaoMaster.DevOpenHelper(getApplicationContext(), "Cookies");
 //                  copyFile("/data/data/com.example.cookiedemo/app_webview/Cookies.db","/data/data/com.example.cookiedemo/databases/Cookies.db");
 //                   getAllFiles("/data/data/com.example.cookiedemo/app_webview/","db");
-            DaoMaster.DevOpenHelper openHelper=new DaoMaster.DevOpenHelper(new DatabaseContext(getApplication(),file),"Cookies",null);
+            DaoMaster.DevOpenHelper openHelper=new DaoMaster.DevOpenHelper(new DatabaseContext(getApplication(),dataBaseFile),"Cookies",null);
             Database db = openHelper.getReadableDb();
             DaoMaster daoMaster = new DaoMaster(db);
             DaoSession daoSession = daoMaster.newSession();
+            daoSession.clear();
             CookiesDao cookiesDao=daoSession.getCookiesDao();
-
-            List<Cookies> cookiesList = cookiesDao.loadAll();
+            List<Cookies>cookiesList=cookiesDao.loadAll();
             if (cookiesList != null) {
                 if (mConvertCookiesList == null) {
                     mConvertCookiesList = new ArrayList<>();
                 }
+                Log.d("getCookies:","getCookies");
                 mConvertCookiesList.clear();
                 for (Cookies cookies : cookiesList) {
                     if (cookies != null) {
@@ -220,14 +223,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         mConvertCookiesList.add(convertCookies);
                     }
                 }
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Gson gson = new GsonBuilder().serializeNulls().create();
-                        showCookie = gson.toJson(mConvertCookiesList);
-                        new ShowCookiePopup(getApplicationContext(), showCookie).showPopupWindow();
-                    }
-                });
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this,GsonUtil.toJsonString(mConvertCookiesList),Toast.LENGTH_SHORT).show();
+                        }
+                    });
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        Gson gson = new GsonBuilder().serializeNulls().create();
+//                        showCookie = gson.toJson(mConvertCookiesList);
+//                        new ShowCookiePopup(getApplicationContext(), showCookie).showPopupWindow();
+//                    }
+//                });
 
             }
         } catch (Exception e) {

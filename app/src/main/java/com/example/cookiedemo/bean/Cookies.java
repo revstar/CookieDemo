@@ -2,6 +2,7 @@ package com.example.cookiedemo.bean;
 
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Generated;
+import org.greenrobot.greendao.annotation.Property;
 
 import java.math.BigInteger;
 
@@ -16,11 +17,17 @@ import java.math.BigInteger;
 
 )
 public class Cookies {
+    @Property(nameInDb = "host_key")
     public String host_key;
+    @Property(nameInDb = "name")
     public String name;
+    @Property(nameInDb = "value")
     public String value;
+    @Property(nameInDb = "path")
     public String path;
+    @Property(nameInDb = "is_secure")
     public boolean is_secure;
+    @Property(nameInDb = "expires_utc")
     public Long expires_utc;
 
 

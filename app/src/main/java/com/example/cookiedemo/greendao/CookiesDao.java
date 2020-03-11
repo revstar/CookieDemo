@@ -24,12 +24,12 @@ public class CookiesDao extends AbstractDao<Cookies, Void> {
      * Can be used for QueryBuilder and for referencing column names.
      */
     public static class Properties {
-        public final static Property Host_key = new Property(0, String.class, "host_key", false, "HOST_KEY");
-        public final static Property Name = new Property(1, String.class, "name", false, "NAME");
-        public final static Property Value = new Property(2, String.class, "value", false, "VALUE");
-        public final static Property Path = new Property(3, String.class, "path", false, "PATH");
-        public final static Property Is_secure = new Property(4, boolean.class, "is_secure", false, "IS_SECURE");
-        public final static Property Expires_utc = new Property(5, Long.class, "expires_utc", false, "EXPIRES_UTC");
+        public final static Property Host_key = new Property(0, String.class, "host_key", false, "host_key");
+        public final static Property Name = new Property(1, String.class, "name", false, "name");
+        public final static Property Value = new Property(2, String.class, "value", false, "value");
+        public final static Property Path = new Property(3, String.class, "path", false, "path");
+        public final static Property Is_secure = new Property(4, boolean.class, "is_secure", false, "is_secure");
+        public final static Property Expires_utc = new Property(5, Long.class, "expires_utc", false, "expires_utc");
     }
 
 
