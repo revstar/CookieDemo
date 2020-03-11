@@ -21,7 +21,7 @@ public class Cookies {
     public String value;
     public String path;
     public boolean is_secure;
-    public long expires_utc;
+    public Long expires_utc;
 
 
 
@@ -30,9 +30,9 @@ public class Cookies {
     public Cookies() {
     }
 
-    @Generated(hash = 1698672437)
+    @Generated(hash = 340821515)
     public Cookies(String host_key, String name, String value, String path,
-            boolean is_secure, long expires_utc) {
+            boolean is_secure, Long expires_utc) {
         this.host_key = host_key;
         this.name = name;
         this.value = value;
@@ -91,5 +91,9 @@ public class Cookies {
 
     public boolean getIs_secure() {
         return this.is_secure;
+    }
+
+    public void setExpires_utc(Long expires_utc) {
+        this.expires_utc = expires_utc;
     }
 }

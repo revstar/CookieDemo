@@ -29,7 +29,7 @@ public class CookiesDao extends AbstractDao<Cookies, Void> {
         public final static Property Value = new Property(2, String.class, "value", false, "VALUE");
         public final static Property Path = new Property(3, String.class, "path", false, "PATH");
         public final static Property Is_secure = new Property(4, boolean.class, "is_secure", false, "IS_SECURE");
-        public final static Property Expires_utc = new Property(5, long.class, "expires_utc", false, "EXPIRES_UTC");
+        public final static Property Expires_utc = new Property(5, Long.class, "expires_utc", false, "EXPIRES_UTC");
     }
 
 
@@ -65,7 +65,11 @@ public class CookiesDao extends AbstractDao<Cookies, Void> {
             stmt.bindString(4, path);
         }
         stmt.bindLong(5, entity.getIs_secure() ? 1L: 0L);
-        stmt.bindLong(6, entity.getExpires_utc());
+ 
+        Long expires_utc = entity.getExpires_utc();
+        if (expires_utc != null) {
+            stmt.bindLong(6, expires_utc);
+        }
     }
 
     @Override
@@ -92,7 +96,11 @@ public class CookiesDao extends AbstractDao<Cookies, Void> {
             stmt.bindString(4, path);
         }
         stmt.bindLong(5, entity.getIs_secure() ? 1L: 0L);
-        stmt.bindLong(6, entity.getExpires_utc());
+ 
+        Long expires_utc = entity.getExpires_utc();
+        if (expires_utc != null) {
+            stmt.bindLong(6, expires_utc);
+        }
     }
 
     @Override
@@ -108,7 +116,7 @@ public class CookiesDao extends AbstractDao<Cookies, Void> {
             cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2), // value
             cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3), // path
             cursor.getShort(offset + 4) != 0, // is_secure
-            cursor.getLong(offset + 5) // expires_utc
+            cursor.isNull(offset + 5) ? null : cursor.getLong(offset + 5) // expires_utc
         );
         return entity;
     }
@@ -120,7 +128,7 @@ public class CookiesDao extends AbstractDao<Cookies, Void> {
         entity.setValue(cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2));
         entity.setPath(cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3));
         entity.setIs_secure(cursor.getShort(offset + 4) != 0);
-        entity.setExpires_utc(cursor.getLong(offset + 5));
+        entity.setExpires_utc(cursor.isNull(offset + 5) ? null : cursor.getLong(offset + 5));
      }
     
     @Override

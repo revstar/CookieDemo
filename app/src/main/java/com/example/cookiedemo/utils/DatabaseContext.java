@@ -16,31 +16,16 @@ import java.io.IOException;
  */
 public class DatabaseContext  extends ContextWrapper {
 
-    public static String dbPath = "";
 
-    public DatabaseContext(Context base, String dbPath) {
+    private File dataBaseFile;
+    public DatabaseContext(Context base, File dataBaseFile) {
         super(base);
-        if(!TextUtils.isEmpty(dbPath)){
-            this.dbPath = dbPath;
-        }
+            this.dataBaseFile = dataBaseFile;
     }
 
     @Override
     public File getDatabasePath(String name){
-        File dbDir = new File(dbPath);
-        if(!dbDir.exists()){
-            dbDir.mkdir();
-        }
-
-        File dbFile = new File(dbPath, name);
-        if(!dbFile.exists()){
-            try {
-                dbFile.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return dbFile;
+        return dataBaseFile;
     }
 
     @Override
