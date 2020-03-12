@@ -17,6 +17,7 @@ import com.example.cookiedemo.bean.ConvertCookies;
 import com.example.cookiedemo.greendao.CookiesDao;
 import com.example.cookiedemo.greendao.DaoMaster;
 import com.example.cookiedemo.greendao.DaoSession;
+import com.example.cookiedemo.utils.DatabaseContext;
 import com.example.cookiedemo.utils.FileUtils;
 import com.example.cookiedemo.utils.GsonUtil;
 import com.google.gson.Gson;
@@ -60,7 +61,6 @@ public class GetCookiesActivity extends AppCompatActivity {
                 try {
                     Thread.sleep(500);
                     getDataBaseFile(cookie_dir, "Cookies");
-                    getCookies();
                 } catch (InterruptedException | IOException e) {
                     e.printStackTrace();
                 }
@@ -90,43 +90,43 @@ public class GetCookiesActivity extends AppCompatActivity {
                 boolean canRead = _file.canRead();
                 int size = (int) _file.length();
                 Log.d("文件大小:", size + "");
-
-                InputStream myInput = new FileInputStream(_file);
-
-                File outFileName = this.getDatabasePath(dbName);
-                boolean isExit = outFileName.exists();
-
-                if (!isExit) {
-                    FileUtils.createFile(outFileName);
-                }
-                // Open the empty db as the output stream
-                OutputStream myOutput = new FileOutputStream(outFileName);
-                // transfer bytes from the inputfile to the outputfile
-                byte[] buffer = new byte[1024];
-                int length;
-                while ((length = myInput.read(buffer)) > 0) {
-                    myOutput.write(buffer, 0, length);
-                }
-                // Close the streams
-                myOutput.flush();
-                myOutput.close();
-                myInput.close();
-                Log.d("复制后的大小", outFileName.length() + "");
+                getCookies(_file);
+//                InputStream myInput = new FileInputStream(_file);
+//
+//                File outFileName = this.getDatabasePath(dbName);
+//                boolean isExit = outFileName.exists();
+//
+//                if (!isExit) {
+//                    FileUtils.createFile(outFileName);
+//                }
+//                // Open the empty db as the output stream
+//                OutputStream myOutput = new FileOutputStream(outFileName);
+//                // transfer bytes from the inputfile to the outputfile
+//                byte[] buffer = new byte[1024];
+//                int length;
+//                while ((length = myInput.read(buffer)) > 0) {
+//                    myOutput.write(buffer, 0, length);
+//                }
+//                // Close the streams
+//                myOutput.flush();
+//                myOutput.close();
+//                myInput.close();
+//                Log.d("复制后的大小", outFileName.length() + "");
             }
         }
 
     }
 
-    private void getCookies() {
+    private void getCookies(File file) {
 
         try {
             Log.d("getCookies:", "getCookies");
             //writeData();
             //String content=getFileContent(new File("/data/data/com.example.cookiedemo/app_webview/data.txt"));
-            DaoMaster.DevOpenHelper openHelper = new DaoMaster.DevOpenHelper(getApplicationContext(), "Cookies");
+//            DaoMaster.DevOpenHelper openHelper = new DaoMaster.DevOpenHelper(getApplicationContext(), "Cookies");
             //copyFile("/data/data/com.example.cookiedemo/app_webview/Cookies.db","/data/data/com.example.cookiedemo/databases/Cookies.db");
             //getAllFiles("/data/data/com.example.cookiedemo/app_webview/","db");
-            // DaoMaster.DevOpenHelper openHelper=new DaoMaster.DevOpenHelper(new DatabaseContext(getApplication(),dataBaseFile),"Cookies",null);
+             DaoMaster.DevOpenHelper openHelper=new DaoMaster.DevOpenHelper(new DatabaseContext(getApplication(),file),"Cookies",null);
             Database db = openHelper.getReadableDb();
             DaoMaster daoMaster = new DaoMaster(db);
             DaoSession daoSession = daoMaster.newSession();
@@ -167,7 +167,13 @@ public class GetCookiesActivity extends AppCompatActivity {
                     }
                 }
             });
-        } catch (Exception e) {
+        } catch (final Exception e) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(),e.getMessage(),Toast.LENGTH_SHORT).show();
+                }
+            });
             e.printStackTrace();
         }
     }

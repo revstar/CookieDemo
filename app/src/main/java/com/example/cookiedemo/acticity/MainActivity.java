@@ -1,13 +1,16 @@
 package com.example.cookiedemo.acticity;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
@@ -30,6 +33,7 @@ import com.example.cookiedemo.greendao.CookiesDao;
 import com.example.cookiedemo.greendao.DaoMaster;
 import com.example.cookiedemo.greendao.DaoSession;
 import com.example.cookiedemo.popup.ShowCookiePopup;
+import com.example.cookiedemo.utils.DatabaseContext;
 import com.example.cookiedemo.utils.FileUtils;
 import com.example.cookiedemo.utils.GsonUtil;
 import com.google.gson.Gson;
@@ -67,6 +71,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         cookie_dir = File.separator + "data" + File.separator + "data" + File.separator + getPackageName() + File.separator + "app_webview";
         setContentView(R.layout.activity_main);
+        getPermission();
         initView();
 
 
@@ -147,15 +152,118 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
+    /**
+     * 获取权限
+     */
+    public void getPermission() {
+
+
+        final List<String> permissionsList = new ArrayList<>();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                permissionsList.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+            }
+
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                permissionsList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            }
+
+
+
+
+            if (permissionsList.size() == 0) {
+//                initData();
+
+            } else {
+                requestPermissions(permissionsList.toArray(new String[permissionsList.size()]),
+                        1);
+            }
+        } else {
+//            initData();
+        }
+
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 1: {
+                if ((ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)||
+                        ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+//                    showTip();
+                }else {
+//                    initData();
+                }
+            }
+            default:
+                break;
+
+        }
+    }
+
+    @Override
+    public void onClick(View v) {
+
+        startThreadGetCookie();
+
+    }
+
+    private void startThreadGetCookie() {
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                              try {
+                    Thread.sleep(500);
+                    getDataBaseFile(cookie_dir, "Cookies");
+                } catch (InterruptedException | IOException e) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(),e.getMessage(),Toast.LENGTH_SHORT).show();
+
+                        }
+                    });
+                    e.printStackTrace();
+                }
+
+            }
+        }).start();
+
+
+    }
+
     private void getDataBaseFile(String cookie_dir, String dbName) throws IOException {
         File f = new File(cookie_dir);
         if (!f.exists()) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(),"f为空",Toast.LENGTH_SHORT).show();
+
+                }
+            });
             return;
         }
-        File[] files = f.listFiles();
+        final File[] files = f.listFiles();
         if (files == null) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(),"files为空",Toast.LENGTH_SHORT).show();
+                }
+            });
             return;
         }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getApplicationContext(),"文件大小:"+files.length+GsonUtil.toJsonString(files),Toast.LENGTH_SHORT).show();
+            }
+        });
         for (File _file : files) {
             if (_file.isDirectory()) {
                 getDataBaseFile(_file.getPath(), dbName);
@@ -167,55 +275,43 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 boolean canRead = _file.canRead();
                 int size = (int) _file.length();
                 Log.d("文件大小:", size + "");
-
-                InputStream myInput = new FileInputStream(_file);
-
-                File outFileName = this.getDatabasePath(dbName);
-                boolean isExit = outFileName.exists();
-
-                if (!isExit) {
-                    FileUtils.createFile(outFileName);
-                }
-                // Open the empty db as the output stream
-                OutputStream myOutput = new FileOutputStream(outFileName);
-                // transfer bytes from the inputfile to the outputfile
-                byte[] buffer = new byte[1024];
-                int length;
-                while ((length = myInput.read(buffer)) > 0) {
-                    myOutput.write(buffer, 0, length);
-                }
-                // Close the streams
-                myOutput.flush();
-                myOutput.close();
-                myInput.close();
-                Log.d("复制后的大小", outFileName.length() + "");
-
+                getCookies(_file);
+//                InputStream myInput = new FileInputStream(_file);
 //
-
-
+//                File outFileName = this.getDatabasePath(dbName);
+//                boolean isExit = outFileName.exists();
+//
+//                if (!isExit) {
+//                    FileUtils.createFile(outFileName);
+//                }
+//                // Open the empty db as the output stream
+//                OutputStream myOutput = new FileOutputStream(outFileName);
+//                // transfer bytes from the inputfile to the outputfile
+//                byte[] buffer = new byte[1024];
+//                int length;
+//                while ((length = myInput.read(buffer)) > 0) {
+//                    myOutput.write(buffer, 0, length);
+//                }
+//                // Close the streams
+//                myOutput.flush();
+//                myOutput.close();
+//                myInput.close();
+//                Log.d("复制后的大小", outFileName.length() + "");
             }
         }
 
     }
 
-
-    @Override
-    public void onClick(View v) {
-
-        startThreadGetCookie();
-
-    }
-
-    private void getCookies() {
+    private void getCookies(File file) {
 
         try {
             Log.d("getCookies:", "getCookies");
             //writeData();
             //String content=getFileContent(new File("/data/data/com.example.cookiedemo/app_webview/data.txt"));
-            DaoMaster.DevOpenHelper openHelper = new DaoMaster.DevOpenHelper(getApplicationContext(), "Cookies");
+//            DaoMaster.DevOpenHelper openHelper = new DaoMaster.DevOpenHelper(getApplicationContext(), "Cookies");
             //copyFile("/data/data/com.example.cookiedemo/app_webview/Cookies.db","/data/data/com.example.cookiedemo/databases/Cookies.db");
             //getAllFiles("/data/data/com.example.cookiedemo/app_webview/","db");
-            // DaoMaster.DevOpenHelper openHelper=new DaoMaster.DevOpenHelper(new DatabaseContext(getApplication(),dataBaseFile),"Cookies",null);
+            DaoMaster.DevOpenHelper openHelper=new DaoMaster.DevOpenHelper(new DatabaseContext(getApplication(),file),"Cookies",null);
             Database db = openHelper.getReadableDb();
             DaoMaster daoMaster = new DaoMaster(db);
             DaoSession daoSession = daoMaster.newSession();
@@ -250,32 +346,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         if (cm != null) {
                             ClipData clipData = ClipData.newPlainText("Label", showCookie);
                             cm.setPrimaryClip(clipData);
-                            new ShowCookiePopup(getApplicationContext(),showCookie).showPopupWindow();
                             Toast.makeText(getApplicationContext(), "已复制到剪切板", Toast.LENGTH_SHORT).show();
+                            new ShowCookiePopup(getApplicationContext(),showCookie).showPopupWindow();
                         }
                     }
                 }
             });
-        } catch (Exception e) {
+        } catch (final Exception e) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(),e.getMessage(),Toast.LENGTH_SHORT).show();
+                }
+            });
             e.printStackTrace();
         }
-    }
-
-
-    private void startThreadGetCookie() {
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(500);
-                    getDataBaseFile(cookie_dir, "Cookies");
-                    getCookies();
-                } catch (InterruptedException | IOException e) {
-                    e.printStackTrace();
-                }
-
-            }
-        }).start();
     }
 }
