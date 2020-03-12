@@ -45,7 +45,9 @@ public class GetCookiesActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_get_cookies);
-        cookie_dir = File.separator + "data" + File.separator + "data" + File.separator + getPackageName() + File.separator + "app_webview";
+//        cookie_dir = File.separator + "data" + File.separator + "data" + File.separator + getPackageName() + File.separator + "app_webview";
+        cookie_dir=getFilesDir().getParent();
+
         tv_show_cookie = findViewById(R.id.tv_show_cookie);
         tv_show_cookie.setMovementMethod(ScrollingMovementMethod.getInstance());
         tv_show_cookie.setText("正在获取Cookie...");

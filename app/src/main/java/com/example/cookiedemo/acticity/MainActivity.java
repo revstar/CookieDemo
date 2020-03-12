@@ -69,7 +69,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        cookie_dir = File.separator + "data" + File.separator + "data" + File.separator + getPackageName() + File.separator + "app_webview";
+//        cookie_dir = File.separator + "data" + File.separator + "data" + File.separator + getPackageName() + File.separator + "app_webview";
+        cookie_dir=getFilesDir().getParent();
         setContentView(R.layout.activity_main);
         getPermission();
         initView();
@@ -217,7 +218,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void run() {
                               try {
-                    Thread.sleep(500);
+                    Thread.sleep(100);
                     getDataBaseFile(cookie_dir, "Cookies");
                 } catch (InterruptedException | IOException e) {
                     runOnUiThread(new Runnable() {
