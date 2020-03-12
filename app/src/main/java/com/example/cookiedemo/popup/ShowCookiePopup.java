@@ -8,11 +8,9 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.cookiedemo.MainActivity;
 import com.example.cookiedemo.R;
 import com.example.cookiedemo.utils.GsonUtil;
 
-import razerdp.basepopup.BasePopup;
 import razerdp.basepopup.BasePopupWindow;
 
 /**
