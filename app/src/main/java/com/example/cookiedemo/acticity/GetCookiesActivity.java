@@ -12,25 +12,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.cookiedemo.R;
+import com.example.cookiedemo.application.CookieApplication;
 import com.example.cookiedemo.bean.Cookies;
 import com.example.cookiedemo.bean.ConvertCookies;
 import com.example.cookiedemo.greendao.CookiesDao;
-import com.example.cookiedemo.greendao.DaoMaster;
-import com.example.cookiedemo.greendao.DaoSession;
-import com.example.cookiedemo.utils.DatabaseContext;
-import com.example.cookiedemo.utils.FileUtils;
+import com.example.cookiedemo.utils.Constants;
 import com.example.cookiedemo.utils.GsonUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import org.greenrobot.greendao.database.Database;
-
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,13 +32,13 @@ public class GetCookiesActivity extends AppCompatActivity {
     private ArrayList<ConvertCookies> mConvertCookiesList;
     private String showCookie;
     private String cookie_dir;
+    private File cookiesFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_get_cookies);
-//        cookie_dir = File.separator + "data" + File.separator + "data" + File.separator + getPackageName() + File.separator + "app_webview";
-        cookie_dir=getFilesDir().getParent();
+        cookie_dir = getFilesDir().getParent();
 
         tv_show_cookie = findViewById(R.id.tv_show_cookie);
         tv_show_cookie.setMovementMethod(ScrollingMovementMethod.getInstance());
@@ -61,14 +53,28 @@ public class GetCookiesActivity extends AppCompatActivity {
             @Override
             public void run() {
                 try {
-                    Thread.sleep(500);
-                    getDataBaseFile(cookie_dir, "Cookies");
-                } catch (InterruptedException | IOException e) {
+                    Log.d("开启线程等待" + Constants.WAITTING_TIME, "秒");
+                    Thread.sleep(Constants.WAITTING_TIME);
+                    if (cookiesFile != null) {
+                        getCookies();
+                    } else {
+                        getDataBaseFile(cookie_dir, "Cookies");
+
+                    }
+                } catch (final InterruptedException | IOException e) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Log.d("发生异常", e.getMessage() + "");
+
+                        }
+                    });
                     e.printStackTrace();
                 }
 
             }
         }).start();
+
     }
 
 
@@ -92,49 +98,25 @@ public class GetCookiesActivity extends AppCompatActivity {
                 boolean canRead = _file.canRead();
                 int size = (int) _file.length();
                 Log.d("文件大小:", size + "");
-                getCookies(_file);
-//                InputStream myInput = new FileInputStream(_file);
-//
-//                File outFileName = this.getDatabasePath(dbName);
-//                boolean isExit = outFileName.exists();
-//
-//                if (!isExit) {
-//                    FileUtils.createFile(outFileName);
-//                }
-//                // Open the empty db as the output stream
-//                OutputStream myOutput = new FileOutputStream(outFileName);
-//                // transfer bytes from the inputfile to the outputfile
-//                byte[] buffer = new byte[1024];
-//                int length;
-//                while ((length = myInput.read(buffer)) > 0) {
-//                    myOutput.write(buffer, 0, length);
-//                }
-//                // Close the streams
-//                myOutput.flush();
-//                myOutput.close();
-//                myInput.close();
-//                Log.d("复制后的大小", outFileName.length() + "");
+                cookiesFile = _file;
+                try {
+                    Log.d("获取cookes数据库成功", "等待" + Constants.WAITTING_TIME + "秒");
+                    Thread.sleep(3000);
+                    getCookies();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
     }
 
-    private void getCookies(File file) {
+    private void getCookies() {
 
         try {
             Log.d("getCookies:", "getCookies");
-            //writeData();
-            //String content=getFileContent(new File("/data/data/com.example.cookiedemo/app_webview/data.txt"));
-//            DaoMaster.DevOpenHelper openHelper = new DaoMaster.DevOpenHelper(getApplicationContext(), "Cookies");
-            //copyFile("/data/data/com.example.cookiedemo/app_webview/Cookies.db","/data/data/com.example.cookiedemo/databases/Cookies.db");
-            //getAllFiles("/data/data/com.example.cookiedemo/app_webview/","db");
-             DaoMaster.DevOpenHelper openHelper=new DaoMaster.DevOpenHelper(new DatabaseContext(getApplication(),file),"Cookies",null);
-            Database db = openHelper.getReadableDb();
-            DaoMaster daoMaster = new DaoMaster(db);
-            DaoSession daoSession = daoMaster.newSession();
-            daoSession.clear();
-
-            CookiesDao cookiesDao = daoSession.getCookiesDao();
+            Log.d("文件是否可以执行",  cookiesFile.canRead()+"");
+            CookiesDao cookiesDao = CookieApplication.getInstance().getDaoSession(cookiesFile).getCookiesDao();
             List<Cookies> cookiesList = cookiesDao.loadAll();
             if (cookiesList == null || cookiesList.size() < 15) {
                 startThreadGetCookie();
@@ -151,7 +133,6 @@ public class GetCookiesActivity extends AppCompatActivity {
                     mConvertCookiesList.add(convertCookies);
                 }
             }
-            db.close();
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -169,14 +150,19 @@ public class GetCookiesActivity extends AppCompatActivity {
                     }
                 }
             });
+
+            CookieApplication.getInstance().closeDao();
+
         } catch (final Exception e) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(getApplicationContext(),e.getMessage(),Toast.LENGTH_SHORT).show();
+                    Log.d("发生异常", e.getMessage() + "");
                 }
             });
             e.printStackTrace();
         }
     }
+
+
 }

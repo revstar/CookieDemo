@@ -33,6 +33,7 @@ import com.example.cookiedemo.greendao.CookiesDao;
 import com.example.cookiedemo.greendao.DaoMaster;
 import com.example.cookiedemo.greendao.DaoSession;
 import com.example.cookiedemo.popup.ShowCookiePopup;
+import com.example.cookiedemo.utils.Constants;
 import com.example.cookiedemo.utils.DatabaseContext;
 import com.example.cookiedemo.utils.FileUtils;
 import com.example.cookiedemo.utils.GsonUtil;
@@ -65,6 +66,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ArrayList<ConvertCookies> mConvertCookiesList;
     private String showCookie;
     private boolean isSync;
+    private File cookiesFile;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,7 +96,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mWebView.requestFocus();
         settings.setUseWideViewPort(true);
         settings.setLoadWithOverviewMode(true);
-
 
         tv_show_url.setText(url);
         mWebView.loadUrl(url);
@@ -133,25 +135,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         });
     }
-
-    /**
-     * 将cookie同步到WebView
-     *
-     * @param url    WebView要加载的url
-     * @param cookie 要同步的cookie
-     * @return true 同步cookie成功，false同步cookie失败
-     * @Author JPH
-     */
-    public boolean syncCookie(String url, String cookie) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            CookieSyncManager.createInstance(getApplicationContext());
-        }
-        CookieManager cookieManager = CookieManager.getInstance();
-        cookieManager.setCookie(url, cookie);//如果没有特殊需求，这里只需要将session id以"key=value"形式作为cookie即可
-        String newCookie = cookieManager.getCookie(url);
-        return TextUtils.isEmpty(newCookie) ? false : true;
-    }
-
 
     /**
      * 获取权限
@@ -218,8 +201,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void run() {
                               try {
-                    Thread.sleep(100);
-                    getDataBaseFile(cookie_dir, "Cookies");
+                    if (cookiesFile!=null){
+                        Thread.sleep(Constants.WAITTING_TIME);
+                        getCookies();
+                    }else {
+                        getDataBaseFile(cookie_dir, "Cookies");
+
+                    }
                 } catch (InterruptedException | IOException e) {
                     runOnUiThread(new Runnable() {
                         @Override
@@ -243,7 +231,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(getApplicationContext(),"f为空",Toast.LENGTH_SHORT).show();
+                    Log.d("===","f为空");
 
                 }
             });
@@ -254,7 +242,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(getApplicationContext(),"files为空",Toast.LENGTH_SHORT).show();
+                    Log.d("===","files为空");
                 }
             });
             return;
@@ -262,7 +250,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(getApplicationContext(),"文件大小:"+files.length+GsonUtil.toJsonString(files),Toast.LENGTH_SHORT).show();
+                Log.d("文件大小:",files.length+GsonUtil.toJsonString(files));
             }
         });
         for (File _file : files) {
@@ -276,7 +264,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 boolean canRead = _file.canRead();
                 int size = (int) _file.length();
                 Log.d("文件大小:", size + "");
-                getCookies(_file);
+                cookiesFile=_file;
+                try {
+                    Log.d("获取数据库成功:", "等待:"+Constants.WAITTING_TIME+"秒");
+                    Thread.sleep(Constants.WAITTING_TIME);
+                    getCookies();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
 //                InputStream myInput = new FileInputStream(_file);
 //
 //                File outFileName = this.getDatabasePath(dbName);
@@ -303,7 +298,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
-    private void getCookies(File file) {
+    private void getCookies() {
 
         try {
             Log.d("getCookies:", "getCookies");
@@ -312,7 +307,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //            DaoMaster.DevOpenHelper openHelper = new DaoMaster.DevOpenHelper(getApplicationContext(), "Cookies");
             //copyFile("/data/data/com.example.cookiedemo/app_webview/Cookies.db","/data/data/com.example.cookiedemo/databases/Cookies.db");
             //getAllFiles("/data/data/com.example.cookiedemo/app_webview/","db");
-            DaoMaster.DevOpenHelper openHelper=new DaoMaster.DevOpenHelper(new DatabaseContext(getApplication(),file),"Cookies",null);
+            DaoMaster.DevOpenHelper openHelper=new DaoMaster.DevOpenHelper(new DatabaseContext(getApplication(),cookiesFile),"Cookies",null);
             Database db = openHelper.getReadableDb();
             DaoMaster daoMaster = new DaoMaster(db);
             DaoSession daoSession = daoMaster.newSession();
@@ -320,7 +315,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             CookiesDao cookiesDao = daoSession.getCookiesDao();
             List<Cookies> cookiesList = cookiesDao.loadAll();
-            if (cookiesList == null || cookiesList.size() < 15) {
+            if (cookiesList == null || cookiesList.size() < 1) {
                 startThreadGetCookie();
                 return;
             }
