@@ -1,13 +1,18 @@
 package com.example.cookiedemo.acticity;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.webkit.CookieManager;
+import android.webkit.WebView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -16,6 +21,7 @@ import com.example.cookiedemo.application.CookieApplication;
 import com.example.cookiedemo.bean.Cookies;
 import com.example.cookiedemo.bean.ConvertCookies;
 import com.example.cookiedemo.greendao.CookiesDao;
+import com.example.cookiedemo.popup.ShowCookiePopup;
 import com.example.cookiedemo.utils.Constants;
 import com.example.cookiedemo.utils.GsonUtil;
 import com.google.gson.Gson;
@@ -23,6 +29,7 @@ import com.google.gson.GsonBuilder;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +40,8 @@ public class GetCookiesActivity extends AppCompatActivity {
     private String showCookie;
     private String cookie_dir;
     private File cookiesFile;
+    private String home_url = "https://main.m.taobao.com/";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,35 +57,58 @@ public class GetCookiesActivity extends AppCompatActivity {
     }
 
     private void startThreadGetCookie() {
-
         new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    Log.d("开启线程等待" + Constants.WAITTING_TIME, "秒");
-                    Thread.sleep(Constants.WAITTING_TIME);
+
                     if (cookiesFile != null) {
                         getCookies();
                     } else {
-                        getDataBaseFile(cookie_dir, "Cookies");
+                        try {
+                            getDataBaseFile(cookie_dir, "Cookies");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            sendMessage(1,e.getMessage());
+                        }
 
                     }
-                } catch (final InterruptedException | IOException e) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Log.d("发生异常", e.getMessage() + "");
 
-                        }
-                    });
-                    e.printStackTrace();
-                }
 
             }
         }).start();
 
     }
 
+    private MyHandler mHandler = new MyHandler(this);
+
+    private static class MyHandler extends Handler {
+
+        private WeakReference<GetCookiesActivity> weakActivity;
+
+        private MyHandler(GetCookiesActivity activity) {
+            weakActivity = new WeakReference<>(activity);
+        }
+
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            super.handleMessage(msg);
+            if (msg.what == 1) {
+                weakActivity.get().showTastTips(msg.obj.toString());
+            } else if (msg.what == 2) {
+
+                if (weakActivity.get().tv_show_cookie!=null){
+                    weakActivity.get().tv_show_cookie.setText(msg.obj.toString());
+                }
+            }
+
+        }
+    }
+
+    public void showTastTips(String tips) {
+        if (tips != null) {
+            Toast.makeText(this, tips, Toast.LENGTH_SHORT).show();
+        }
+    }
 
     private void getDataBaseFile(String cookie_dir, String dbName) throws IOException {
         File f = new File(cookie_dir);
@@ -95,17 +127,10 @@ public class GetCookiesActivity extends AppCompatActivity {
             Log.d("fileName:", _file.getName());
 
             if (_file.isFile() && _file.getName().equals(dbName)) {
-                boolean canRead = _file.canRead();
                 int size = (int) _file.length();
                 Log.d("文件大小:", size + "");
                 cookiesFile = _file;
-                try {
-                    Log.d("获取cookes数据库成功", "等待" + Constants.WAITTING_TIME + "秒");
-                    Thread.sleep(3000);
-                    getCookies();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                getCookies();
             }
         }
 
@@ -115,7 +140,7 @@ public class GetCookiesActivity extends AppCompatActivity {
 
         try {
             Log.d("getCookies:", "getCookies");
-            Log.d("文件是否可以执行",  cookiesFile.canRead()+"");
+            Log.d("文件是否可以执行", cookiesFile.canRead() + "");
             CookiesDao cookiesDao = CookieApplication.getInstance().getDaoSession(cookiesFile).getCookiesDao();
             List<Cookies> cookiesList = cookiesDao.loadAll();
             if (cookiesList == null || cookiesList.size() < 15) {
@@ -133,34 +158,34 @@ public class GetCookiesActivity extends AppCompatActivity {
                     mConvertCookiesList.add(convertCookies);
                 }
             }
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Gson gson = new GsonBuilder().serializeNulls().create();
-                    showCookie = gson.toJson(mConvertCookiesList);
-                    if (showCookie != null && tv_show_cookie != null) {
-                        showCookie = GsonUtil.toFormat(showCookie, true, false);
-                        tv_show_cookie.setText(showCookie);
-                        ClipboardManager cm = (ClipboardManager) getApplicationContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                        if (cm != null) {
-                            ClipData clipData = ClipData.newPlainText("Label", showCookie);
-                            cm.setPrimaryClip(clipData);
-                            Toast.makeText(getApplicationContext(), "已复制到剪切板", Toast.LENGTH_SHORT).show();
-                        }
-                    }
+
+            Gson gson = new GsonBuilder().serializeNulls().create();
+            showCookie = gson.toJson(mConvertCookiesList);
+            if (showCookie != null && tv_show_cookie != null) {
+                showCookie = GsonUtil.toFormat(showCookie, true, false);
+                ClipboardManager cm = (ClipboardManager) getApplicationContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                if (cm != null) {
+                    ClipData clipData = ClipData.newPlainText("Label", showCookie);
+                    cm.setPrimaryClip(clipData);
+                    sendMessage(2,showCookie);
+                    sendMessage(1,"已复制到剪切板");
                 }
-            });
+            }
 
             CookieApplication.getInstance().closeDao();
 
         } catch (final Exception e) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Log.d("发生异常", e.getMessage() + "");
-                }
-            });
+            sendMessage(1,e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    private void sendMessage(int what, String obj) {
+        if (mHandler != null) {
+            Message message = Message.obtain();
+            message.what = what;
+            message.obj = obj;
+            mHandler.sendMessage(message);
         }
     }
 

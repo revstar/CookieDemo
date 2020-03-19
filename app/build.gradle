@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'org.greenrobot.greendao' // apply plugin
 android {
     compileSdkVersion 29
-    buildToolsVersion "29.0.2"
+    buildToolsVersion "29.0.3"
     defaultConfig {
         applicationId "com.example.cookiedemo"
         minSdkVersion 19
@@ -46,5 +46,6 @@ dependencies {
     implementation 'com.squareup.okhttp3:logging-interceptor:3.9.0'
     implementation 'io.reactivex.rxjava2:rxjava:2.2.0'
     implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
+//    implementation 'com.tencent.tbs.tbssdk:sdk:43697'
 
 }

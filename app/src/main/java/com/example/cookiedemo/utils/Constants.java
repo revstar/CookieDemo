@@ -6,6 +6,6 @@ package com.example.cookiedemo.utils;
  * Email 1967919189@qq.com
  */
 public class Constants {
-    public static final  int WAITTING_TIME=3000;
+    public static final  int WAITTING_TIME=100;
     public static final String TAB_NAME="Cookies";
 }
