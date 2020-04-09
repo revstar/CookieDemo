@@ -60,4 +60,16 @@ public class ConvertCookies {
     public void setExpires(Long expires) {
         this.expires = expires;
     }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getValue() {
+        return value;
+    }
 }

@@ -119,7 +119,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 flush();
                 if (s.equals(http_my_tao_bao_url) || s.equals(https_my_tao_bao_url)) {
                     Toast.makeText(getApplicationContext(), "登录成功", Toast.LENGTH_SHORT).show();
-                    startActivity(new Intent(MainActivity.this, GetCookiesActivity.class));
+                    String cookieStr=CookieManager.getInstance().getCookie(s);
+
+                    Intent intent=new Intent(MainActivity.this, GetCookiesActivity.class);
+                    intent.putExtra("cookieStr",cookieStr);
+                    startActivity(intent);
                 }
                 super.onPageFinished(view, s);
 

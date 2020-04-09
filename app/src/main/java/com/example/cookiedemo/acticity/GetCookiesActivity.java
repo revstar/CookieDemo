@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -32,6 +33,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class GetCookiesActivity extends AppCompatActivity {
 
@@ -42,11 +44,13 @@ public class GetCookiesActivity extends AppCompatActivity {
     private File cookiesFile;
     private String home_url = "https://main.m.taobao.com/";
 
+    private String cookieStr;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_get_cookies);
+        cookieStr = getIntent().getStringExtra("cookieStr");
         cookie_dir = getFilesDir().getParent();
 
         tv_show_cookie = findViewById(R.id.tv_show_cookie);
@@ -61,17 +65,17 @@ public class GetCookiesActivity extends AppCompatActivity {
             @Override
             public void run() {
 
-                    if (cookiesFile != null) {
-                        getCookies();
-                    } else {
-                        try {
-                            getDataBaseFile(cookie_dir, "Cookies");
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            sendMessage(1,e.getMessage());
-                        }
-
+                if (cookiesFile != null) {
+                    getCookies();
+                } else {
+                    try {
+                        getDataBaseFile(cookie_dir, "Cookies");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        sendMessage(1, e.getMessage());
                     }
+
+                }
 
 
             }
@@ -96,7 +100,7 @@ public class GetCookiesActivity extends AppCompatActivity {
                 weakActivity.get().showTastTips(msg.obj.toString());
             } else if (msg.what == 2) {
 
-                if (weakActivity.get().tv_show_cookie!=null){
+                if (weakActivity.get().tv_show_cookie != null) {
                     weakActivity.get().tv_show_cookie.setText(msg.obj.toString());
                 }
             }
@@ -158,6 +162,40 @@ public class GetCookiesActivity extends AppCompatActivity {
                     mConvertCookiesList.add(convertCookies);
                 }
             }
+            for (int i = 0; i < mConvertCookiesList.size(); i++) {
+                mConvertCookiesList.get(i).setValue("");
+            }
+
+            String[] cookieArray = cookieStr.split(";");
+            for (String item : cookieArray) {
+                if (item != null) {
+                    String[] last = item.split("=", 2);
+                    String last0 = last[0];
+                    String last1 = last[1];
+                    last0 = last0.replaceAll("[^\u4e00-\u9fa5a-zA-Z0-9]", "");
+
+                    for (int i = 0; i < mConvertCookiesList.size(); i++) {
+                        if (mConvertCookiesList.get(i) != null) {
+                            String name = mConvertCookiesList.get(i).getName();
+                            name = name.replaceAll("[^\u4e00-\u9fa5a-zA-Z0-9]", "");
+                            if (last0.equals(name)) {
+                                mConvertCookiesList.get(i).setValue(last1);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            //重新处理一遍，去掉value为空的选项
+            for (int i = mConvertCookiesList.size() - 1; i >= 0; i--) {
+                if (mConvertCookiesList.get(i) != null) {
+                    String values = mConvertCookiesList.get(i).getValue();
+                    if (values == null || values.equals("")) {
+                        mConvertCookiesList.remove(i);
+                    }
+                }
+            }
+
 
             Gson gson = new GsonBuilder().serializeNulls().create();
             showCookie = gson.toJson(mConvertCookiesList);
@@ -167,18 +205,19 @@ public class GetCookiesActivity extends AppCompatActivity {
                 if (cm != null) {
                     ClipData clipData = ClipData.newPlainText("Label", showCookie);
                     cm.setPrimaryClip(clipData);
-                    sendMessage(2,showCookie);
-                    sendMessage(1,"已复制到剪切板");
+                    sendMessage(2, showCookie);
+                    sendMessage(1, "已复制到剪切板");
                 }
             }
 
             CookieApplication.getInstance().closeDao();
 
         } catch (final Exception e) {
-            sendMessage(1,e.getMessage());
+            sendMessage(1, e.getMessage());
             e.printStackTrace();
         }
     }
+
 
     private void sendMessage(int what, String obj) {
         if (mHandler != null) {
